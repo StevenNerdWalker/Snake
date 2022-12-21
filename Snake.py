@@ -76,7 +76,7 @@ class Snake:
         if direction is not None:   # check this in case the snake hasnt begun moving yet
             self.head = (self.x, self.y)    # update the head
             self.body.insert(0, self.head)  # insert the new head at the beginning of the list
-            if len(self.body) > length: 
+            if len(self.body) > length:     # if the snake has grown, dont delete, else, do
                 del self.body[-1]       # delete the last part of the tail
 
 
@@ -110,14 +110,24 @@ class Snake:
 
 
 class Food:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, snake: Snake) -> None:
+        snake_body = snake.get_body()
+        self.width, self.height = snake.get_board_dimensions()
 
-    def move_food(self):
-        pass
+        # every coordinate that isnt part of the snakes body
+        empty_space = [(x, y) for x in range(self.width) for y in range(self.height) if (x, y) not in set(snake_body)]
+        
+        self.position = random.choice(empty_space)
+
+
+    def move_food(self, snake: Snake):
+        snake_body = snake.get_body()
+        empty_space = [(x, y) for x in range(self.width) for y in range(self.height) if (x, y) not in set(snake_body)]
+        self.position = random.choice(empty_space)
+
 
     def get_position(self):
-        pass
+        return self.position
 
 
 def print_board(snake: Snake, food: Food):
@@ -125,7 +135,7 @@ def print_board(snake: Snake, food: Food):
     snake_set = set(snake_body)     # will only need to test membership in the snake, so turn it into a set
     width, height = snake.get_board_dimensions()
 
-    print('\n'*30)  # clear the screen so it looks like the same board updating
+    print('\n'*27)  # clear the screen so it looks like the same board updating
 
     print('#='+'-='*width+'#')
 
@@ -158,6 +168,7 @@ def getch_move(q):
     if a == b'\x00':
         b = ms.getch()
         q.put(b)
+    
     return
 
 
@@ -181,25 +192,32 @@ def get_move(stop):
             return None
 
 
-def main(board_width, board_height):
+def main(board_width, board_height, initial_delay, delay_reduction_factor):
     snake = Snake(board_width, board_height)
-    food = Food()
-    delay = 2
+    food = Food(snake)
+    delay = initial_delay
+    score = 0
 
     while True:
         print_board(snake, food)
+
         move = get_move(delay)
         if move is not None:
             snake.change_direction(move)
         snake.move()
-        #if snake.check_food(food):
-        #    snake.grow()
-        #    food.move_food()
+
+        if snake.check_food(food):
+            snake.grow()
+            food.move_food(snake)
+            delay = delay/delay_reduction_factor
+            score += 1
+
         if snake.check_collision():
             break
-    
+
     print_board(snake, food)
     print('\nGAME OVER')
+    print(f'SCORE: {score}')
             
 
 if __name__ == '__main__':
@@ -207,7 +225,7 @@ if __name__ == '__main__':
     # agora eu entendi o porque do name == main
     # é pra nenhum dos processos executar o codigo que é só do processo principal
     # então tudo fora desse if tambem seria executado pelo processo
-    main(10, 10)
+    main(10, 10, 1, 1)
     
 
 
