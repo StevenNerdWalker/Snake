@@ -6,6 +6,9 @@ import time, random
 class Snake:
     def __init__(self, board_width, board_height) -> None:
         """Spawn the snake in the center of the board with an initial length of two pointing to the right and with no initial direction"""
+        if board_width < 3 or board_height < 3:
+            raise Exception        
+        
         self.board_width = board_width
         self.board_height = board_height # the point 0, 0 is the top left corner
 
@@ -15,35 +18,102 @@ class Snake:
         self.head = (self.x, self.y)
 
         self.body = []      # each element is a x, y pair , the first element is the head and the last is the tail
-        self.tail = (self.x-1, self.y)
         self.body.append(self.head)
-        self.body.append(self.tail)
+        self.body.append((self.x-1, self.y))    # tail
         self.direction = None
+
+
+    def get_head_position(self):
+        return self.head
+
 
     def get_direction(self):
         return self.direction
 
-    def change_direction(self, new_direction):
+
+    def change_direction(self, move):
+        # hkpm are the arrows representations in bytes
+        # checks if the move wont go backwards (eg press w when going down)
+        new_direction = self.direction # initialize the variable just in case the move isnt valid and doesnt enter any of the ifs
+
+        if move == 'w' or move == 'H':
+            if self.direction != 'down':
+                new_direction = 'up'
+        elif move == 'a' or move == 'K':
+            if self.direction != 'right':
+                new_direction = 'left'
+        elif move == 's' or move == 'P':
+            if self.direction != 'up':
+                new_direction = 'down'
+        elif move == 'd' or move == 'M':
+            if self.direction != 'left':
+                new_direction = 'right'
+
         self.direction = new_direction
+
 
     def get_body(self):
         return self.body
 
+
     def get_board_dimensions(self):
         return (self.board_width, self.board_height)
 
+
     def move(self):
-        pass
+        direction = self.direction
+        length = self.length
+
+        if direction == 'up':
+            self.y -= 1     # move it up
+        elif direction == 'down':
+            self.y += 1     # move it down
+        elif direction == 'left':
+            self.x -= 1     # move it left
+        elif direction == 'right':
+            self.x += 1     # move it right
+
+        if direction is not None:   # check this in case the snake hasnt begun moving yet
+            self.head = (self.x, self.y)    # update the head
+            self.body.insert(0, self.head)  # insert the new head at the beginning of the list
+            if len(self.body) > length: 
+                del self.body[-1]       # delete the last part of the tail
+
 
     def check_collision(self):
-        pass
+        body = self.body
+        head = body[0]
+        x = head[0]
+        y = head[1]
+        body_minus_head = set(body[1:])
+
+        if head in body_minus_head:     # the head is intersecting some part of the body (aka sharing the same coordinates)
+            return True
+
+        if x < 0 or x > self.board_width-1:   # the head hit the left or right wall
+            return True
+
+        if y < 0 or y > self.board_height-1:    # the head hit the top or bottom wall
+            return True
+
+        return False
+
+
+    def check_food(self, food):
+        if food.get_position() == self.get_head_position():
+            return True
+        return False
+
+
+    def grow(self):
+        self.length += 1
 
 
 class Food:
     def __init__(self) -> None:
         pass
 
-    def spawn_food(self):
+    def move_food(self):
         pass
 
     def get_position(self):
@@ -103,10 +173,10 @@ def get_move(stop):
 
         # queue works in first in first out
         if q.qsize() == 1:      # wasd only adds 1 item to the queue
-            return q.get()
+            return q.get().decode(encoding='ASCII')
         elif q.qsize() == 2:    # arrow key adds 2 items
             q.get()             # get the first one out
-            return q.get()      # return the arrow key
+            return q.get().decode(encoding='ASCII')      # return the arrow key
         else:
             return None
 
@@ -117,9 +187,19 @@ def main(board_width, board_height):
     delay = 2
 
     while True:
+        print_board(snake, food)
         move = get_move(delay)
         if move is not None:
             snake.change_direction(move)
+        snake.move()
+        #if snake.check_food(food):
+        #    snake.grow()
+        #    food.move_food()
+        if snake.check_collision():
+            break
+    
+    print_board(snake, food)
+    print('\nGAME OVER')
             
 
 if __name__ == '__main__':
@@ -127,10 +207,9 @@ if __name__ == '__main__':
     # agora eu entendi o porque do name == main
     # é pra nenhum dos processos executar o codigo que é só do processo principal
     # então tudo fora desse if tambem seria executado pelo processo
-    main(9, 9)
+    main(10, 10)
     
 
 
 
-# maybe dont need self.length in snake
 # TODO multiplayer snake? wasd and arrows?
