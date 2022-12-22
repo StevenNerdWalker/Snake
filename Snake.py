@@ -229,5 +229,5 @@ if __name__ == '__main__':
     
 
 
-
+# helpful links:https://docs.python.org/3/library/multiprocessing.html / https://fedingo.com/how-to-stop-python-code-after-certain-amount-of-time/ / https://stackoverflow.com/questions/3523174/raw-input-without-pressing-enter
 # TODO multiplayer snake? wasd and arrows?
